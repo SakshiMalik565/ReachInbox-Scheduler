@@ -1,0 +1,28 @@
+{
+  "name": "reachinbox-scheduler-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=@reachinbox/shared && npm run build --workspace=@reachinbox/api && npm run build --workspace=@reachinbox/web",
+    "build:shared": "npm run build --workspace=@reachinbox/shared",
+    "build:api": "npm run build --workspace=@reachinbox/api",
+    "build:web": "npm run build --workspace=@reachinbox/web",
+    "dev:api": "npm run dev --workspace=@reachinbox/api",
+    "dev:worker": "npm run dev:worker --workspace=@reachinbox/api",
+    "dev:web": "npm run dev --workspace=@reachinbox/web",
+    "prisma:generate": "npm run prisma:generate --workspace=@reachinbox/api",
+    "prisma:migrate": "npm run prisma:migrate --workspace=@reachinbox/api",
+    "prisma:push": "npm run prisma:push --workspace=@reachinbox/api",
+    "prisma:studio": "npm run prisma:studio --workspace=@reachinbox/api",
+    "seed": "npm run seed --workspace=@reachinbox/api",
+    "test": "npm run test --workspace=@reachinbox/api",
+    "typecheck": "npm run typecheck --workspaces"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
