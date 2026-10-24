@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
@@ -13,6 +13,10 @@
     "@hookform/resolvers": "^3.4.2",
     "@reachinbox/shared": "*",
     "@tanstack/react-query": "^5.39.0",
+    "@types/node": "^20.12.12",
+    "@types/papaparse": "^5.3.14",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.379.0",
     "papaparse": "^5.4.1",
