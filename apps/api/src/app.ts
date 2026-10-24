@@ -69,6 +69,7 @@ export function createApp(): express.Application {
 
   // Serve React frontend static assets if built
   const possibleDistPaths = [
+    path.resolve(__dirname, '../../web/dist'),
     path.resolve(__dirname, '../../../web/dist'),
     path.resolve(process.cwd(), 'apps/web/dist'),
     path.resolve(process.cwd(), '../web/dist')
