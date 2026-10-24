@@ -1,0 +1,100 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum EmailStatus {
+  SCHEDULED
+  PROCESSING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum SlackConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+}
+
+model User {
+  id               String            @id @default(uuid())
+  googleId         String            @unique
+  name             String
+  email            String            @unique
+  avatarUrl        String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  senders          Sender[]
+  emails           Email[]
+  slackConnections SlackConnection[]
+
+  @@index([email])
+}
+
+model Sender {
+  id                    String   @id @default(uuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email                 String
+  displayName           String
+  etherealUser          String?
+  etherealPassEncrypted String?
+  smtpHost              String?
+  smtpPort              Int?
+  smtpSecure            Boolean? @default(false)
+  enabled               Boolean  @default(true)
+  hourlyLimit           Int      @default(100)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  emails                Email[]
+
+  @@unique([userId, email])
+  @@index([userId])
+}
+
+model Email {
+  id                 String      @id @default(uuid())
+  userId             String
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  senderId           String
+  sender             Sender      @relation(fields: [senderId], references: [id], onDelete: Restrict)
+  recipient          String
+  subject            String
+  body               String      @db.Text
+  scheduledTime      DateTime
+  actualSentTime     DateTime?
+  status             EmailStatus @default(SCHEDULED)
+  idempotencyKey     String?
+  bullJobId          String?
+  retryCount         Int         @default(0)
+  lastError          String?     @db.Text
+  etherealPreviewUrl String?     @db.Text
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, status])
+  @@index([scheduledTime, status])
+  @@index([senderId, status])
+}
+
+model SlackConnection {
+  id                   String                @id @default(uuid())
+  userId               String                @unique
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId               String
+  teamName             String?
+  channelId            String?
+  channelName          String?
+  encryptedAccessToken String                @db.Text
+  scopes               String
+  status               SlackConnectionStatus @default(CONNECTED)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  @@index([userId])
+}
