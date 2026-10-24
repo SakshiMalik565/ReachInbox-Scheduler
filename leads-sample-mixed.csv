@@ -1,0 +1,7 @@
+email,name,notes
+valid.lead1@example.com,Valid Lead 1,Normal lead
+not-a-valid-email,Invalid Lead 2,Syntax error in email
+valid.lead2@outboxlabs.com,Valid Lead 3,Normal lead
+@missingusername.com,Invalid Lead 4,Missing local part
+valid.lead3@reachinbox.ai,Valid Lead 5,Normal lead
+   spaces in email@domain.com  ,Invalid Lead 6,Unquoted space
