@@ -7,6 +7,8 @@ services:
     buildCommand: npm install && npm run build:shared && npm run prisma:generate && npm run build:web && npm run build:api
     startCommand: npx prisma db push --schema apps/api/prisma/schema.prisma && npm run start --workspace=@reachinbox/api
     envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
       - key: NODE_ENV
         value: production
       - key: RUN_INLINE_WORKER
