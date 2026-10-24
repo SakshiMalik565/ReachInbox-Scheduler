@@ -1,0 +1,67 @@
+services:
+  # 1. ReachInbox Backend API + In-Process Worker
+  - type: web
+    name: reachinbox-api
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build:shared && npm run prisma:generate && npm run build:api
+    startCommand: npx prisma db push --schema apps/api/prisma/schema.prisma && npm run start --workspace=@reachinbox/api
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RUN_INLINE_WORKER
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: reachinbox-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: reachinbox-redis
+          property: connectionString
+      - key: FRONTEND_URL
+        sync: false
+      - key: API_BASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: TOKEN_ENCRYPTION_KEY
+        value: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      - key: WORKER_CONCURRENCY
+        value: "5"
+      - key: MIN_DELAY_BETWEEN_EMAILS_MS
+        value: "2000"
+      - key: MAX_EMAILS_PER_HOUR_PER_SENDER
+        value: "100"
+
+  # 2. ReachInbox Web Frontend Dashboard (Static Site)
+  - type: web
+    name: reachinbox-web
+    env: static
+    plan: free
+    buildCommand: npm install && npm run build:shared && npm run build:web
+    staticPublishPath: apps/web/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: reachinbox-api
+          envVarKey: RENDER_EXTERNAL_URL
+
+databases:
+  # 3. PostgreSQL Database
+  - name: reachinbox-db
+    plan: free
+    databaseName: reachinbox
+    user: reachinbox_user
+
+# 4. Redis Key-Value Store
+redis:
+  - name: reachinbox-redis
+    plan: free
+    ipAllowList: [] # internal access only

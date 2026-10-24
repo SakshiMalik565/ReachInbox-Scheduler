@@ -30,7 +30,7 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onOpenCompose }
 
         {/* Live Bull Board Link */}
         <a
-          href="/admin/queues"
+          href={`${(import.meta.env.VITE_API_URL || '').replace(/\/$/, '')}/admin/queues`}
           target="_blank"
           rel="noreferrer"
           className="hidden md:flex items-center px-3 py-1.5 text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100/80 border border-indigo-200/60 rounded-lg transition-colors font-medium"

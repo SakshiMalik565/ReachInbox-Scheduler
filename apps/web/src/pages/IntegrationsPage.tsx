@@ -44,7 +44,8 @@ export const IntegrationsPage: React.FC = () => {
   });
 
   const handleConnectSlack = () => {
-    window.location.href = '/api/slack/connect';
+    const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+    window.location.href = `${apiBase}/api/slack/connect`;
   };
 
   return (

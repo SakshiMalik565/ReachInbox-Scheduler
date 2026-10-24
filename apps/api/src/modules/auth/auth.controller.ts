@@ -14,6 +14,16 @@ function getGoogleOAuthClient(): OAuth2Client {
   );
 }
 
+function getCookieOptions() {
+  const isProd = config.NODE_ENV === 'production' || config.FRONTEND_URL.startsWith('https://');
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  };
+}
+
 export class AuthController {
   /**
    * Initiates Google OAuth 2.0 flow
@@ -34,13 +44,13 @@ export class AuthController {
     }
 
     const state = crypto.randomBytes(32).toString('hex');
-    const isProduction = config.NODE_ENV === 'production';
+    const isProduction = config.NODE_ENV === 'production' || config.FRONTEND_URL.startsWith('https://');
 
     // Store state in HTTP-only cookie for CSRF verification
     res.cookie('oauth_state', state, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'lax',
+      sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
       maxAge: 10 * 60 * 1000 // 10 minutes
     });
 
@@ -135,16 +145,14 @@ export class AuthController {
         { expiresIn: '7d' }
       );
 
-      const isProduction = config.NODE_ENV === 'production';
+      res.cookie('auth_session', sessionToken, getCookieOptions());
 
-      res.cookie('auth_session', sessionToken, {
+      const isProduction = config.NODE_ENV === 'production' || config.FRONTEND_URL.startsWith('https://');
+      res.clearCookie('oauth_state', {
         httpOnly: true,
         secure: isProduction,
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax'
       });
-
-      res.clearCookie('oauth_state');
       res.redirect(`${config.FRONTEND_URL}/dashboard`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -230,12 +238,7 @@ export class AuthController {
       { expiresIn: '7d' }
     );
 
-    res.cookie('auth_session', sessionToken, {
-      httpOnly: true,
-      secure: config.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
+    res.cookie('auth_session', sessionToken, getCookieOptions());
 
     res.json({ success: true, user });
   }
@@ -244,7 +247,12 @@ export class AuthController {
    * Log out user
    */
   public static async logout(req: Request, res: Response): Promise<void> {
-    res.clearCookie('auth_session');
+    const opts = getCookieOptions();
+    res.clearCookie('auth_session', {
+      httpOnly: opts.httpOnly,
+      secure: opts.secure,
+      sameSite: opts.sameSite
+    });
     res.json({ success: true, message: 'Logged out successfully' });
   }
 }

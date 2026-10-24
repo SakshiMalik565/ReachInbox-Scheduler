@@ -12,8 +12,10 @@ export const LoginPage: React.FC = () => {
     return <Navigate to="/scheduled" replace />;
   }
 
+  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
   const handleGoogleLogin = () => {
-    window.location.href = '/api/auth/google';
+    window.location.href = `${apiBase}/api/auth/google`;
   };
 
   return (
@@ -82,7 +84,7 @@ export const LoginPage: React.FC = () => {
             <button
               onClick={async () => {
                 try {
-                  const res = await fetch('/api/auth/demo-session', {
+                  const res = await fetch(`${apiBase}/api/auth/demo-session`, {
                     method: 'POST',
                     credentials: 'include'
                   });

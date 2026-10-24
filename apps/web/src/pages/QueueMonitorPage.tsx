@@ -106,7 +106,7 @@ export const QueueMonitorPage: React.FC = () => {
           </button>
 
           <a
-            href="/admin/queues"
+            href={`${(import.meta.env.VITE_API_URL || '').replace(/\/$/, '')}/admin/queues`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors"

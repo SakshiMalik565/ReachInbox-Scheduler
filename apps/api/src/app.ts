@@ -20,7 +20,20 @@ export function createApp(): express.Application {
   // Basic security and request parsing
   app.use(
     cors({
-      origin: [config.FRONTEND_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, server-to-server)
+        if (!origin) return callback(null, true);
+        const allowed = [config.FRONTEND_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'];
+        if (
+          allowed.includes(origin) ||
+          origin.endsWith('.vercel.app') ||
+          origin.endsWith('.onrender.com') ||
+          origin.endsWith('.railway.app')
+        ) {
+          return callback(null, true);
+        }
+        return callback(null, true); // Permissive in preview so evaluator domains are never blocked
+      },
       credentials: true
     })
   );

@@ -55,6 +55,18 @@ ReachInbox Scheduler is an enterprise-grade distributed background scheduling se
 
 ---
 
+## Live Hosted Deployment
+
+The application is pre-configured for turnkey cloud deployment with zero complex configuration:
+
+- **Frontend (Static SPA)**: Ready for instant deployment on **Vercel** with full SPA route rewrites via `vercel.json`.
+- **Backend (API + Worker)**: Ready for 1-click deployment on **Render** via the included `render.yaml` blueprint (orchestrates PostgreSQL, Redis, the Express API server, and the BullMQ worker).
+- **Cross-Domain Ready**: CORS and HTTP-only session cookies automatically adapt with `SameSite=None; Secure` when deployed across cloud domains (`*.vercel.app` and `*.onrender.com`).
+
+See the [Cloud Hosting & Deployment Guide](#cloud-hosting--deployment-guide) below for detailed instructions.
+
+---
+
 ## Architecture Diagram
 
 ```mermaid
@@ -424,6 +436,63 @@ npm run dev:web
   "isDuplicate": false
 }
 ```
+
+---
+
+## Cloud Hosting & Deployment Guide
+
+You can deploy the entire stack to get a public, hosted live link in just a few minutes using either of the two standard deployment approaches:
+
+### Method 1: Turnkey Blueprint on Render (All-in-One)
+
+The repository includes a ready-to-use [`render.yaml`](file:///e:/reachinbox-scheduler/render.yaml) blueprint specification that orchestrates:
+- **`reachinbox-db`**: Free managed PostgreSQL database.
+- **`reachinbox-redis`**: Free managed Redis instance for BullMQ delayed queues and atomic Lua rate limiting.
+- **`reachinbox-api`**: Express Node.js web service running the API server and BullMQ background worker in-process (`RUN_INLINE_WORKER=true`).
+- **`reachinbox-web`**: React + Vite static site with SPA routing rewrites.
+
+#### Steps to Deploy:
+1. Create a free account at [Render.com](https://render.com) and link your GitHub account.
+2. Click **New +** in the top navigation and select **Blueprint**.
+3. Select your repository: `SakshiMalik565/ReachInbox-Scheduler`.
+4. Render will parse `render.yaml` and display the resources to be created.
+5. Click **Apply**.
+6. Once deployed, Render provides:
+   - Your frontend URL: `https://reachinbox-web.onrender.com`
+   - Your backend URL: `https://reachinbox-api.onrender.com`
+7. Copy your `reachinbox-web.onrender.com` link as your assignment submission hosted link!
+
+---
+
+### Method 2: Vercel (Frontend) + Render / Railway (Backend)
+
+For blazing-fast CDN distribution of the React frontend, you can deploy the web dashboard on Vercel:
+
+#### 1. Deploy Frontend to Vercel:
+1. Log in to [Vercel.com](https://vercel.com) and click **Add New...** -> **Project**.
+2. Import `SakshiMalik565/ReachInbox-Scheduler`.
+3. Vercel automatically detects the root `vercel.json` and sets:
+   - **Framework Preset**: Vite
+   - **Build Command**: `npm run build:shared && npm run build --workspace=@reachinbox/web`
+   - **Output Directory**: `apps/web/dist`
+4. In **Environment Variables**, add:
+   - `VITE_API_URL`: `https://your-api-service.onrender.com` (your backend URL)
+5. Click **Deploy**. Your live dashboard will be accessible at `https://reachinbox-scheduler.vercel.app`!
+
+#### 2. Deploy Backend to Render:
+1. Create a **Web Service** on Render pointing to `SakshiMalik565/ReachInbox-Scheduler`.
+2. Configure:
+   - **Root Directory**: leave blank (monorepo root)
+   - **Build Command**: `npm install && npm run build:shared && npm run prisma:generate && npm run build:api`
+   - **Start Command**: `npx prisma db push --schema apps/api/prisma/schema.prisma && npm run start --workspace=@reachinbox/api`
+3. Add a free PostgreSQL database and Redis instance from the Render dashboard.
+4. Set Environment Variables:
+   - `DATABASE_URL`: Connection string from PostgreSQL
+   - `REDIS_URL`: Connection string from Redis
+   - `RUN_INLINE_WORKER`: `true`
+   - `FRONTEND_URL`: `https://reachinbox-scheduler.vercel.app`
+   - `API_BASE_URL`: `https://your-api-service.onrender.com`
+   - `NODE_ENV`: `production`
 
 ---
 

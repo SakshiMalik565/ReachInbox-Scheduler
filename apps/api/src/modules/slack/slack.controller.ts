@@ -26,12 +26,12 @@ export class SlackController {
     };
 
     const state = jwt.sign(statePayload, config.SESSION_SECRET, { expiresIn: '15m' });
-    const isProduction = config.NODE_ENV === 'production';
+    const isProduction = config.NODE_ENV === 'production' || config.FRONTEND_URL.startsWith('https://');
 
     res.cookie('slack_oauth_state', state, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'lax',
+      sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
       maxAge: 15 * 60 * 1000
     });
 
@@ -79,7 +79,12 @@ export class SlackController {
 
     try {
       await SlackService.handleOAuthCallback(userId, code);
-      res.clearCookie('slack_oauth_state');
+      const isProduction = config.NODE_ENV === 'production' || config.FRONTEND_URL.startsWith('https://');
+      res.clearCookie('slack_oauth_state', {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax'
+      });
       res.redirect(`${config.FRONTEND_URL}/dashboard?slack=connected`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
