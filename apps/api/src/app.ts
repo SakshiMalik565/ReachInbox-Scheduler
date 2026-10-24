@@ -1,4 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
+import path from 'path';
+import fs from 'fs';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import pinoHttp from 'pino-http';
@@ -64,6 +66,32 @@ export function createApp(): express.Application {
   app.use('/api/senders', sendersRoutes);
   app.use('/api/search', searchRoutes);
   app.use('/api/slack', slackRoutes);
+
+  // Serve React frontend static assets if built
+  const possibleDistPaths = [
+    path.resolve(__dirname, '../../../web/dist'),
+    path.resolve(process.cwd(), 'apps/web/dist'),
+    path.resolve(process.cwd(), '../web/dist')
+  ];
+
+  let webDistPath: string | null = null;
+  for (const p of possibleDistPaths) {
+    if (fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'))) {
+      webDistPath = p;
+      break;
+    }
+  }
+
+  if (webDistPath) {
+    logger.info(`Serving static web assets from ${webDistPath}`);
+    app.use(express.static(webDistPath));
+    app.get('*', (req: Request, res: Response, next: NextFunction) => {
+      if (req.path.startsWith('/api') || req.path.startsWith('/admin/queues')) {
+        return next();
+      }
+      res.sendFile(path.join(webDistPath!, 'index.html'));
+    });
+  }
 
   // 404 Handler
   app.use((req: Request, res: Response) => {

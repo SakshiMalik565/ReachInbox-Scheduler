@@ -1,10 +1,10 @@
 services:
-  # 1. ReachInbox Backend API + In-Process Worker
+  # 1. ReachInbox Full-Stack Application (API + BullMQ Worker + React Dashboard)
   - type: web
-    name: reachinbox-api
-    env: node
+    name: reachinbox-app
+    runtime: node
     plan: free
-    buildCommand: npm install && npm run build:shared && npm run prisma:generate && npm run build:api
+    buildCommand: npm install && npm run build:shared && npm run prisma:generate && npm run build:web && npm run build:api
     startCommand: npx prisma db push --schema apps/api/prisma/schema.prisma && npm run start --workspace=@reachinbox/api
     envVars:
       - key: NODE_ENV
@@ -17,13 +17,9 @@ services:
           property: connectionString
       - key: REDIS_URL
         fromService:
-          type: redis
+          type: keyvalue
           name: reachinbox-redis
           property: connectionString
-      - key: FRONTEND_URL
-        sync: false
-      - key: API_BASE_URL
-        sync: false
       - key: SESSION_SECRET
         generateValue: true
       - key: TOKEN_ENCRYPTION_KEY
@@ -35,33 +31,15 @@ services:
       - key: MAX_EMAILS_PER_HOUR_PER_SENDER
         value: "100"
 
-  # 2. ReachInbox Web Frontend Dashboard (Static Site)
-  - type: web
-    name: reachinbox-web
-    env: static
+  # 2. Redis Key-Value Store for BullMQ & Rate Limiter
+  - type: keyvalue
+    name: reachinbox-redis
     plan: free
-    buildCommand: npm install && npm run build:shared && npm run build:web
-    staticPublishPath: apps/web/dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_API_URL
-        fromService:
-          type: web
-          name: reachinbox-api
-          envVarKey: RENDER_EXTERNAL_URL
+    ipAllowList: []
 
 databases:
-  # 3. PostgreSQL Database
+  # 3. Managed PostgreSQL Database
   - name: reachinbox-db
     plan: free
     databaseName: reachinbox
     user: reachinbox_user
-
-# 4. Redis Key-Value Store
-redis:
-  - name: reachinbox-redis
-    plan: free
-    ipAllowList: [] # internal access only
